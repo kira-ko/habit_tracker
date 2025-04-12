@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/Theme/colors.dart'; // Подключаем файл с цветами
+import 'package:habit_tracker/models/habit.dart'; // Импортируем модель привыычки
+
+
 
 class CreateHabitScreen extends StatefulWidget {
   @override
@@ -47,10 +50,16 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                       child: ElevatedButton(
                         onPressed: isSaveEnabled
                             ? () {
-                          // Логика для сохранения привычки
-                          print("Привычка сохранена: ${_habitNameController.text}");
-                        }
-                            : null, // Кнопка не активна, если нет названия
+                                // Создаем привычку
+                                Habit newHabit = Habit(
+                                  name: _habitNameController.text,
+                                  color: habitColor,
+                                );
+
+                                // Возвращаемся на предыдущий экран и передаем привычку
+                                Navigator.pop(context, newHabit);
+                              }
+                        : null,
                         child: Text('Сохранить', style: TextStyle(color: AppColors.background)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryText, // Цвет кнопки
