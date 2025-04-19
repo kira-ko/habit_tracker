@@ -50,9 +50,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   // Кнопка создания привычки
                   GestureDetector(
-                    onTap: () {
-                      // Переход на экран создания привычки
-                      Navigator.pushNamed(context, '/create');
+                    onTap: () async {
+                      final newHabit = await Navigator.pushNamed(context, '/create');
+                      if (newHabit != null && newHabit is Habit) {
+                        setState(() {
+                          habits.add(newHabit);
+                          habitCompletionStatus.add(List.generate(7, (index) => false)); // Новая привычка → новая строка статусов
+                        });
+                      }
                     },
                     child: Container(
                       width: 38,

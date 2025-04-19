@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker/Theme/colors.dart'; // Подключаем файл с цветами
-import 'package:habit_tracker/models/habit.dart'; // Импортируем модель привыычки
-
-
+import 'package:habit_tracker/models/habit.dart'; // Импортируем модель привычки
 
 class CreateHabitScreen extends StatefulWidget {
   @override
@@ -10,13 +8,19 @@ class CreateHabitScreen extends StatefulWidget {
 }
 
 class _CreateHabitScreenState extends State<CreateHabitScreen> {
-  // Контроллер для поля ввода названия привычки
+  // Список привычек
+  List<Habit> habits = [];
+
+  // Контроллеры для полей ввода (для создания привычек)
   TextEditingController _habitNameController = TextEditingController();
-  // Переменная для хранения выбранного цвета
+  TextEditingController _habitDescriptionController = TextEditingController();
   Color habitColor = AppColors.green; // По умолчанию зеленый
-  Color selectedColor = AppColors.green; // Для отслеживания выбранного цвета
+
   // Функция проверки, введено ли название привычки
   bool get isSaveEnabled => _habitNameController.text.isNotEmpty;
+
+  // Логика для отслеживания выполнения привычек
+  List<List<bool>> habitCompletionStatus = [];
 
 
   @override
@@ -46,25 +50,26 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                     ),
                     // Кнопка сохранить, видимая только если введено название привычки
                     Visibility(
-                      visible: isSaveEnabled, // Кнопка будет видна только если введено название
+                      visible: isSaveEnabled,
                       child: ElevatedButton(
                         onPressed: isSaveEnabled
                             ? () {
-                                // Создаем привычку
-                                Habit newHabit = Habit(
-                                  name: _habitNameController.text,
-                                  color: habitColor,
-                                );
+                          // Создаем привычку
+                          Habit newHabit = Habit(
+                            title: _habitNameController.text,
+                            description: _habitDescriptionController.text,
+                            color: habitColor,
+                          );
 
-                                // Возвращаемся на предыдущий экран и передаем привычку
-                                Navigator.pop(context, newHabit);
-                              }
-                        : null,
+                          // Возвращаемся на предыдущий экран и передаем привычку
+                          Navigator.pop(context, newHabit);
+                        }
+                            : null,
                         child: Text('Сохранить', style: TextStyle(color: AppColors.background)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryText, // Цвет кнопки
+                          backgroundColor: AppColors.primaryText,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20), // Закругленные углы
+                            borderRadius: BorderRadius.circular(20),
                           ),
                         ),
                       ),
@@ -77,19 +82,17 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
             // Название привычки
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GestureDetector(
-                onTap: () {
-                  // Логика при нажатии, например, можно автоматически фокусировать поле ввода
-                },
-                child: TextField(
-                  controller: _habitNameController,
-                  style: TextStyle(fontSize: 32, color: AppColors.primaryText),
-                  decoration: InputDecoration(
-                    border: InputBorder.none, // Без рамки
-                    hintText: 'Название привычки', // Подсказка, если поле пустое
-                    hintStyle: TextStyle(color: AppColors.primaryText), // Цвет подсказки
-                  ),
+              child: TextField(
+                controller: _habitNameController,
+                style: TextStyle(fontSize: 32, color: AppColors.primaryText),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: 'Название привычки',
+                  hintStyle: TextStyle(color: AppColors.primaryText),
                 ),
+                onChanged: (text) {
+                  setState(() {}); // Чтобы обновить видимость кнопки "Сохранить"
+                },
               ),
             ),
 
@@ -113,6 +116,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                         style: TextStyle(fontSize: 18, color: AppColors.primaryText),
                       ),
                       TextField(
+                        controller: _habitDescriptionController,
                         decoration: InputDecoration(
                           border: InputBorder.none,
                           hintText: 'Введите описание',
@@ -144,9 +148,8 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                         style: TextStyle(fontSize: 18, color: AppColors.primaryText),
                       ),
                       Row(
-                        mainAxisSize: MainAxisSize.min, // Важно, чтобы не растягивались
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Цветовые квадратики с отступами и анимацией
                           for (var color in [
                             AppColors.green,
                             AppColors.pink,
@@ -156,7 +159,7 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                             GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  habitColor = color; // Обновляем цвет верхнего прямоугольника
+                                  habitColor = color;
                                 });
                               },
                               child: Padding(
