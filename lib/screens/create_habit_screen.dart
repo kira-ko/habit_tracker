@@ -56,10 +56,14 @@ class _CreateHabitScreenState extends State<CreateHabitScreen> {
                             ? () {
                           // Создаем привычку
                           Habit newHabit = Habit(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
                             title: _habitNameController.text,
                             description: _habitDescriptionController.text,
-                            color: habitColor,
+                            colorValue: habitColor.value, // 💡 передаём int!
+                            completionStatus: List.filled(7, false),
                           );
+
+
 
                           // Возвращаемся на предыдущий экран и передаем привычку
                           Navigator.pop(context, newHabit);

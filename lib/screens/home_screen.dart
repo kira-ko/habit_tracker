@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Для использования SVG иконок
 import 'package:habit_tracker/Theme/colors.dart';
+import 'package:habit_tracker/models/habit.dart';
+import 'package:hive/hive.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -9,18 +11,33 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   // Пример данных привычек
-  final List<Habit> habits = [
-    Habit(name: 'Пить воду', color: AppColors.green),
-    Habit(name: 'Зарядка', color: AppColors.blue),
-    Habit(name: 'Чтение', color: AppColors.pink),
-  ];
+  List<Habit> habits = [];
 
-  // Логика для отслеживания выполнения привычки (можно делать с помощью bool для каждого дня)
-  List<List<bool>> habitCompletionStatus = [
-    [false, false, false, false, false, false, false], // Статус выполнения для первой привычки
-    [true, false, true, false, true, false, true], // Для второй привычки
-    [false, false, false, false, false, false, false], // Для третьей привычки
-  ];
+  final List<String> weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  late Box<Habit> habitBox;
+
+  @override
+  void initState() {
+    super.initState();
+    loadHabits(); // Загружаем привычки при старте
+  }
+
+  Future<void> loadHabits() async {
+    habitBox = Hive.box<Habit>('habits'); // открываем бокс
+    setState(() {
+      habits = habitBox.values.toList(); // получаем все привычки
+    });
+  }
+
+  Future<void> saveHabit(Habit habit) async {
+    await habitBox.add(habit); // сохраняем новую привычку
+    setState(() {
+      habits.add(habit); // добавляем в локальный список для обновления UI
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -55,8 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       if (newHabit != null && newHabit is Habit) {
                         setState(() {
                           habits.add(newHabit);
-                          habitCompletionStatus.add(List.generate(7, (index) => false)); // Новая привычка → новая строка статусов
                         });
+                        habitBox.add(newHabit);
                       }
                     },
                     child: Container(
@@ -68,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Center(
                         child: SvgPicture.asset(
-                          'assets/icons/plus_icon.svg', // Путь к твоей иконке
+                          'assets/icons/plus_icon.svg',
                           width: 22,
                           height: 22,
                           color: Color(0xFFFFFBF4), // Цвет иконки
@@ -117,79 +134,87 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // Отображение привычек, если они есть
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0), // Отступ между днями недели и привычками
-              child: Column(
-                children: habits.asMap().map((habitIndex, habit) {
-                  return MapEntry(
-                    habitIndex,
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0), // Отступ между карточками
-                      child: Container(
-                        width: 380,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: habit.color, // Цвет карточки зависит от привычки
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Название привычки
-                              Text(
-                                habit.name,
+            // Список привычек или сообщение
+            Expanded(
+              child: habits.isEmpty
+                  ? Center(
+                child: Text(
+                  'У вас пока нет созданных привычек',
+                  style: TextStyle(fontSize: 18, color: AppColors.primaryText),
+                ),
+              )
+                  : ListView.builder(
+                itemCount: habits.length,
+                itemBuilder: (context, index) {
+                  final habit = habits[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20.0), // Отступ между карточками
+                    child: Container(
+                      width: double.infinity,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: habit.color,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Название привычки
+                            Padding(
+                              padding: const EdgeInsets.only(left: 9.0, bottom: 8.0),
+                              child: Text(
+                                habit.title,
                                 style: TextStyle(
                                   fontSize: 32,
                                   color: AppColors.primaryText,
                                 ),
                               ),
-                              // Дни недели для отметок выполнения
-                              Padding(
-                                padding: const EdgeInsets.only(top: 5.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(7, (index) {
-                                    bool isCompleted = habitCompletionStatus[habitIndex][index]; // Логика выполнения привычки
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            habitCompletionStatus[habitIndex][index] = !isCompleted;
-                                          });
-                                        },
-                                        child: CircleAvatar(
-                                          radius: 14,
-                                          backgroundColor: isCompleted
-                                              ? Color(0xFF393B34) // Темный цвет, когда выполнено
-                                              : Colors.transparent, // Прозрачный, когда не выполнено
-                                          child: isCompleted
-                                              ? SizedBox.shrink()
-                                              : Container(
-                                            decoration: BoxDecoration(
-                                              border: Border.all(
-                                                color: AppColors.primaryText, // Цвет контура
-                                                width: 2, // Толщина контура
-                                              ),
-                                              shape: BoxShape.circle,
-                                            ),
+                            ),
+                            // Кружки для дней
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(7, (dayIndex) {
+                                bool isCompleted = habit.completionStatus[dayIndex];
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      setState(() {
+                                        habit.completionStatus[dayIndex] = !isCompleted;
+                                      });
+                                      await habit.save(); // сохраняем изменения в Hive
+                                    },
+
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: isCompleted
+                                          ? Color(0xFF393B34)
+                                          : Colors.transparent,
+                                      child: isCompleted
+                                          ? SizedBox.shrink()
+                                          : Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: AppColors.primaryText,
+                                            width: 2,
                                           ),
+                                          shape: BoxShape.circle,
                                         ),
                                       ),
-                                    );
-                                  }),
-                                ),
-                              )
-                            ],
-                          ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   );
-                }).values.toList(),
+                },
+
               ),
             ),
           ],
@@ -215,12 +240,4 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-}
-
-// Модель привычки
-class Habit {
-  final String name;
-  final Color color;
-
-  Habit({required this.name, required this.color});
 }
