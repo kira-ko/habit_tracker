@@ -10,6 +10,8 @@ void main() async {
 
   Hive.registerAdapter(HabitAdapter());
   await Hive.openBox<Habit>('habits');
+  await Hive.openBox('settingsBox');
+
 
   runApp(MyApp());
 }

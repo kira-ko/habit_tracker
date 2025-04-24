@@ -29,4 +29,20 @@ class Habit extends HiveObject {
   });
 
   Color get color => Color(colorValue);
+
+  Habit copyWith({
+    String? id,
+    String? title,
+    String? description,
+    int? colorValue,
+    List<bool>? completionStatus,
+  }) {
+    return Habit(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      colorValue: colorValue ?? this.colorValue,
+      completionStatus: completionStatus ?? this.completionStatus,
+    );
+  }
 }
